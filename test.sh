@@ -112,6 +112,8 @@ name="[${previous_tag}]To[${current_tag}]"
 #######################
 # if 이전 태그와 최종 태그가 동일한 경우, 최종 태그를 아직 지정하지 않은 상태이므로 공지
 # else 이전 태그와 최종 태그가 동일하지 않은 경우, 공지 없이 정상 작동
+echo ${previous_tag}
+echo ${current_tag}
 if [ "${previous_tag}" = "${current_tag}" ]; then
 	name="[${previous_tag}]"
 	current_tag="$(git describe --tags)"
