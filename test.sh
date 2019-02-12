@@ -69,7 +69,8 @@ previous_tag="$(git describe --match "${branch_nm}*" --abbrev=0 --tags $(git rev
 ######################
 echo "디렉터리 생성 중..."
 cd V:/
-dir="jovt_${project}_${branch_nm}"
+tran_project=$(echo $project | tr '[a-z]' '[A-Z]')
+dir="JOVT_${tran_project}_${branch_nm}"
 if [ ! -d ${dir} ]; then
     mkdir ${dir}
 fi
@@ -114,12 +115,15 @@ name="[${previous_tag}]To[${current_tag}]"
 if [ "${previous_tag}" = "${current_tag}" ]; then
 	name="[${previous_tag}]"
 	current_tag="$(git describe --tags)"
-	echo "범위 : ${previous_tag} ~ 최종 커밋"
 	recordLog "!!!!필독!!!!"
 	recordLog "패키징이 완료된 후, 반드시 최종 커밋에 '${branch_nm}_${today_date}_패치' 태그를 달아주시기 바랍니다."
+	recordLog "--------------------------------------------------------------------------------------------------"
+
+	echo "범위 : ${previous_tag} ~ 최종 커밋"
+	recordLog "* 태그 범위 : ${previous_tag} ~ 최종 커밋"
 else
 	echo "범위 : ${previous_tag} ~ ${current_tag}"
-	recordLog "* 범위 : ${previous_tag} ~ ${current_tag}"
+	recordLog "* 태그 범위 : ${previous_tag} ~ ${current_tag}"
 fi
 
 ###########
@@ -128,7 +132,6 @@ fi
 echo "파일 생성 중..."
 recordLog "--------------------------------------------------------------------------------------------------"
 recordLog "* jovt_${project} 브랜치명: ${branch_nm}"
-recordLog "* 태그 범위 : ${previous_tag} ~ 최종 커밋"
 recordLog "* 생성 파일"
 
 git archive -o V:/"${dir}"/htdocs_Update_${name}.zip HEAD $(git diff --diff-filter=AMR --name-only ${previous_tag}..${current_tag} -- ':!*etc/*')
