@@ -73,7 +73,7 @@ previous_tag="$(git describe --match "${branch_nm}*" --abbrev=0 --tags)"
 echo "디렉터리 생성 중..."
 cd V:/
 tran_project=$(echo $project | tr '[a-z]' '[A-Z]')
-dir="JOVT_${tran_project}_${branch_nm}"
+dir="JOVT_${tran_project}_${today_date}"
 if [ ! -d ${dir} ]; then
     mkdir ${dir}
 fi
@@ -134,7 +134,7 @@ fi
 # current_tag: 최종 태그
 # name: 범위를 나타내는 이름 값
 ###############################
-current_tag="$(git describe --tags --abbrev=0 HEAD)"
+#current_tag="$(git describe --tags --abbrev=0 HEAD)"
 #name="[${previous_tag}]To[${current_tag}]"
 #############################################################
 # 패키징 범위 세부 확인 (최초 태그만 있고, 이후 태그가 없는 경우)
@@ -145,7 +145,7 @@ current_tag="$(git describe --tags --abbrev=0 HEAD)"
 #만약 반드시 태그를 만들어야만 만들어지도록 하게끔 한다면 이 부분 수정
 #if [ "${previous_tag}" = "${current_tag}" ]; then
 	#name="[${previous_tag}]"
-	current_tag="$(git describe --tags)"
+#	current_tag="$(git describe --tags)"
 	#recordLog "!!!!필독!!!!"
 	#recordLog "패키징이 완료된 후, 반드시 최종 커밋에 '${branch_nm}_${today_date}_패치' 태그를 달아주시기 바랍니다."
 	#recordLog "--------------------------------------------------------------------------------------------------"
@@ -173,8 +173,9 @@ echo "파일 생성 완료..."
 # 업데이트 리스트 생성
 ######################
 echo "리스트 생성 중..."
-git diff --diff-filter=AMR --name-status ${previous_tag}..${current_tag} -- ':!*etc/*' > V:/"${dir}"/update_list_"${name}".txt
-recordLog "- update_list_${name}.txt"
+#git diff --diff-filter=AMR --name-status ${previous_tag}..${current_tag} -- ':!*etc/*' > V:/"${dir}"/htdocs_Update_list_"${today_date}".txt
+git diff --diff-filter=AMR --name-status ${previous_tag} -- ':!*etc/*' > V:/"${dir}"/htdocs_Update_list_"${today_date}".txt
+recordLog "- htdocs_Update_list_${today_date}.txt"
 
 ##########################
 # JAVA 업데이트 리스트 생성
@@ -182,8 +183,8 @@ recordLog "- update_list_${name}.txt"
 #if [ -n "$(git diff --diff-filter=AMR --name-status ${previous_tag}..${current_tag} -- ':!*etc/*' '*.java')" ]; then
 # git diff --diff-filter=AMR --name-status ${previous_tag}..${current_tag} -- ':!*etc/*' '*.java' > V:/"${dir}"/update_java_list_"${name}".txt
 if [ -n "$(git diff --diff-filter=AMR --name-status ${previous_tag} -- ':!*etc/*' '*.java')" ]; then
-	git diff --diff-filter=AMR --name-status ${previous_tag} -- ':!*etc/*' '*.java' > V:/"${dir}"/update_java_list_"${name}".txt
-	recordLog "- update_java_list_${name}.txt (!!!!필독!!!! class 파일 필요)"
+	git diff --diff-filter=AMR --name-status ${previous_tag} -- ':!*etc/*' '*.java' > V:/"${dir}"/htdocs_Update_java_list_"${today_date}".txt
+	recordLog "- htdocs_Update_java_list_${today_date}.txt (!!!!필독!!!! class 파일 필요)"
 fi
 recordLog "- log_${today_date}.txt"
 recordLog "--------------------------------------------------------------------------------------------------"
