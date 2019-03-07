@@ -93,15 +93,16 @@ function recordLog(){
 function outputLog(){
 	for (( i=0; i<${#log[@]}; i++ ))
 	do
-	    echo "${log[$i]}" >> V:/"${dir}"/log_${today_date}.txt
+	    echo "${log[$i]}" >> V:/"${dir}"/readMe.txt
 	done
 
 	##########################
 	# 파일 생성된 디렉터리 확인
 	##########################
 	cd V:/"${dir}"/
+	unzip htdocs_Update_${name}.zip
 	start .
-	start log_${today_date}.txt
+	start readMe.txt
 }
 name="${branch_nm}_${today_date}_패치"
 recordLog "========================$(date '+%Y-%m-%d %H:%M:%S')========================"
@@ -174,19 +175,19 @@ echo "파일 생성 완료..."
 ######################
 echo "리스트 생성 중..."
 #git diff --diff-filter=AMR --name-status ${previous_tag}..${current_tag} -- ':!*etc/*' > V:/"${dir}"/htdocs_Update_list_"${today_date}".txt
-git diff --diff-filter=AMR --name-status ${previous_tag} -- ':!*etc/*' > V:/"${dir}"/htdocs_Update_list_"${today_date}".txt
-recordLog "- htdocs_Update_list_${today_date}.txt"
+(git diff --diff-filter=AMR --name-only ${previous_tag} -- ':!*etc/*') | sed -e "s/\//\\\/g" > V:/"${dir}"/htdocs_Update_list_"${today_date}".txt
+recordLog "- htdocs_Update_list.txt"
 
 ##########################
 # JAVA 업데이트 리스트 생성
 ##########################
 #if [ -n "$(git diff --diff-filter=AMR --name-status ${previous_tag}..${current_tag} -- ':!*etc/*' '*.java')" ]; then
 # git diff --diff-filter=AMR --name-status ${previous_tag}..${current_tag} -- ':!*etc/*' '*.java' > V:/"${dir}"/update_java_list_"${name}".txt
-if [ -n "$(git diff --diff-filter=AMR --name-status ${previous_tag} -- ':!*etc/*' '*.java')" ]; then
-	git diff --diff-filter=AMR --name-status ${previous_tag} -- ':!*etc/*' '*.java' > V:/"${dir}"/htdocs_Update_java_list_"${today_date}".txt
-	recordLog "- htdocs_Update_java_list_${today_date}.txt (!!!!필독!!!! class 파일 필요)"
+if [ -n "$(git diff --diff-filter=AMR --name-only ${previous_tag} -- ':!*etc/*' '*.java')" ]; then
+	(git diff --diff-filter=AMR --name-only ${previous_tag} -- ':!*etc/*' '*.java') | sed -e "s/\//\\\/g" | sed -e "s/java/class/g" | sed -e "s/src/classes/g" > V:/"${dir}"/htdocs_Update_java_list_"${today_date}".txt
+	recordLog "- htdocs_Update_class_list.txt (!!!!필독!!!! class 파일 필요)"
 fi
-recordLog "- log_${today_date}.txt"
+recordLog "- readMe.txt"
 recordLog "--------------------------------------------------------------------------------------------------"
 recordLog " "
 echo "리스트 생성 완료..."
