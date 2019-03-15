@@ -67,9 +67,10 @@ cd ${project_path}
 ##################################
 today_date="$(date +%Y)$(date +%m)$(date +%d)"
 branch_nm="$(git symbolic-ref --short HEAD)"
-#previous_tag="$(git describe --match "${branch_nm}*" --abbrev=0 --tags $(git rev-list --tags --skip=1 --max-count=1))"
-#서민금융진흥원의 tag를 찾아야함
-previous_tag="$(git describe --match "${branch_nm}*" --abbrev=0 --tags)"
+# 태그 to 태그
+previous_tag_name="$(git describe --tags --abbrev=0 $(git rev-list --tags="${branch_nm}*" --skip=1 --max-count=1))"
+previous_tag="$(git rev-list --tags="${branch_nm}*" --skip=1 --max-count=1)"
+
 ######################
 # 디렉터리 생성
 ######################
@@ -111,21 +112,11 @@ function outputLog(){
 	# 압축된 파일 풀기
 	##########################
 	cd V:/.patch/"${dir}"/
-	#if [ -n "$(git diff --diff-filter=AMR --name-only ${previous_tag} -- ':!*etc/*' '*.java')" ]; then
 	if [ -n "htdocs_Update_class_list.txt" ]; then
 		unzip htdocs_Update_${name}.zip
 		rm -R -f htdocs_Update_${name}.zip
 	fi
-# https://soharang.tistory.com/543
-#	#Compress-Archive htdocs_Update_class_list.txt class.zip
-#	cat hello.txt | \
-#	while read -r line
-#	do
-#		#Compress-Archive -Path ${line} -CompressionLevel Optimal -DestinationPath htdocs_Update_class_list.zip
-#		echo ${line}
-#		cp -ar ${line} ehllo.class
-#	done
-	#rm -R -f hello.txt
+
 
 
 	start .
@@ -151,56 +142,24 @@ if [ -z $(git tag -l *${branch_nm}*) ]; then # TODO: 현재 브랜치에서의 t
 fi
 if [ -z "${previous_tag}" ]; then
 	recordLog "!!!!에러!!!!"
-	recordLog "이전 태그가 존재하지 않습니다."
-	recordLog "'${branch_nm}_초기셋팅' 태그를 생성해 주십시오."
+	recordLog "2개 이상의 태그가 필요합니다."
 	recordLog " "
 
 	outputLog
 	exit
 fi
-###############################지울곳
-# last_commit: 최종 커밋
-# ex) last commit: 현대해상_20190214_패치-6-g32e9253b7
-# ex) previous_tag: 현대해상_20190214_패치
-###############################
-last_commit="$(git describe --tags HEAD)"
 
-if [ "${previous_tag}" = "${last_commit}" ]; then
-	recordLog "!!!!에러!!!!"
-	recordLog "마지막 태그 이후 커밋된 이력이 없습니다."
-	recordLog "최종 커밋: ${last_commit}"
-	recordLog " "
-
-	outputLog
-	exit
-fi
 
 ###############################
 # current_tag: 최종 태그
 # name: 범위를 나타내는 이름 값
 ###############################
-#current_tag="$(git describe --tags --abbrev=0 HEAD)"
+current_tag_name="$(git describe --tags --abbrev=0 $(git rev-list --tags="${branch_nm}*" --skip=0 --max-count=1))"
+current_tag="$(git rev-list --tags="${branch_nm}*" --skip=0 --max-count=1)"
 #name="[${previous_tag}]To[${current_tag}]"
-#############################################################
-# 패키징 범위 세부 확인 (최초 태그만 있고, 이후 태그가 없는 경우)
-#############################################################
-# if 이전 태그와 최종 태그가 동일한 경우, 최종 태그를 아직 지정하지 않은 상태이므로 공지
-# else 이전 태그와 최종 태그가 동일하지 않은 경우, 공지 없이 정상 작동
 
-#만약 반드시 태그를 만들어야만 만들어지도록 하게끔 한다면 이 부분 수정
-#if [ "${previous_tag}" = "${current_tag}" ]; then
-	#name="[${previous_tag}]"
-#	current_tag="$(git describe --tags)"
-	#recordLog "!!!!필독!!!!"
-	#recordLog "패키징이 완료된 후, 반드시 최종 커밋에 '${branch_nm}_${today_date}_패치' 태그를 달아주시기 바랍니다."
-	#recordLog "--------------------------------------------------------------------------------------------------"
-
-	echo "범위 : ${previous_tag} ~ 최종 커밋"
-	recordLog "* 패치 범위 : ${previous_tag} ~ 최종 커밋"
-#else
-	#echo "범위 : ${previous_tag} ~ ${current_tag}"
-	#recordLog "* 태그 범위 : ${previous_tag} ~ ${current_tag}"
-#fi
+	echo "범위 : ${previous_tag} ~ ${current_tag}"
+	recordLog "* 태그 범위 : ${previous_tag} ~ ${current_tag}"
 
 ###########
 # 파일 생성
@@ -209,16 +168,8 @@ echo "파일 생성 중..."
 recordLog "--------------------------------------------------------------------------------------------------"
 recordLog "* jovt_${project} 브랜치명: ${branch_nm}"
 recordLog "* 생성 파일"
-#git archive -o V:/.patch/"${dir}"/htdocs_Update_${name}.zip HEAD $(git diff --diff-filter=AMR --name-only ${previous_tag}..${current_tag} -- ':!*etc/*')
-#git archive -o V:/.patch/"${dir}"/htdocs_Update_${name}.zip HEAD $(git diff --diff-filter=AMR --name-only ${previous_tag} -- ':!*etc/*' ':!*.java')
 git archive -o V:/.patch/"${dir}"/htdocs_Update_${name}.zip HEAD $(git diff --diff-filter=AMR --name-only ${previous_tag} -- ':!*etc/*')
 
-#java만 따로 빼는 기능 주석
-#if [ -n "$(git diff --diff-filter=AMR --name-only ${previous_tag} -- ':!*etc/*' '*.java')" ]; then
-#	git archive -o V:/.patch/"${dir}"/htdocs_Update_java_${name}.zip HEAD $(git diff --diff-filter=AMR --name-only ${previous_tag} -- ':!*etc/*' '*.java')
-#	recordLog "- htdocs_Update_java_${name}.zip"
-#	echo "java 파일 생성 완료..."
-#fi
 recordLog "- htdocs_Update_${name}.zip"
 echo "파일 생성 완료..."
 
@@ -226,19 +177,13 @@ echo "파일 생성 완료..."
 # 업데이트 리스트 생성
 ######################
 echo "리스트 생성 중..."
-#git diff --diff-filter=AMR --name-status ${previous_tag}..${current_tag} -- ':!*etc/*' > V:/.patch/"${dir}"/htdocs_Update_list_"${today_date}".txt
-#(git diff --diff-filter=AMR --name-only ${previous_tag} -- ':!*etc/*') | sed -e "s/\//\\\/g" > V:/.patch/"${dir}"/htdocs_Update_list_"${today_date}".txt
-#(git diff --diff-filter=AMR --name-only ${previous_tag} -- ':!*etc/*') | sed -e "s,htdocs,${project_path}\/htdocs,g" | sed -e "s/\//\\\/g" > V:/.patch/"${dir}"/htdocs_Update_list.txt
 (git diff --diff-filter=AMR --name-only ${previous_tag} -- ':!*etc/*') > V:/.patch/"${dir}"/htdocs_Update_list.txt
 recordLog "- htdocs_Update_list.txt"
 
 ##########################
 # JAVA 업데이트 리스트 생성
 ##########################
-#if [ -n "$(git diff --diff-filter=AMR --name-status ${previous_tag}..${current_tag} -- ':!*etc/*' '*.java')" ]; then
-# git diff --diff-filter=AMR --name-status ${previous_tag}..${current_tag} -- ':!*etc/*' '*.java' > V:/.patch/"${dir}"/update_java_list_"${name}".txt
 if [ -n "$(git diff --diff-filter=AMR --name-only ${previous_tag} -- ':!*etc/*' '*.java')" ]; then
-	#(git diff --diff-filter=AMR --name-only ${previous_tag} -- ':!*etc/*' '*.java') | sed -e "s/\//\\\/g" | sed -e "s/java/class/g" | sed -e "s/src/classes/g" > V:/.patch/"${dir}"/htdocs_Update_java_list_"${today_date}".txt
 	(git diff --diff-filter=AMR --name-only ${previous_tag} -- ':!*etc/*' '*.java') | sed -e "s,htdocs,${project_path}\/htdocs,g" | sed -e "s/\//\\\/g" | sed -e "s/java/class/g" | sed -e "s/src/classes/g" > V:/.patch/"${dir}"/htdocs_Update_class_list.txt
 	(git diff --diff-filter=AMR --name-only ${previous_tag} -- ':!*etc/*' '*.java') | sed -e "s/java/class/g" | sed -e "s/src/classes/g" > V:/.patch/"${dir}"/htdocs_Update_class_list_for_git.txt
 	recordLog "- htdocs_Update_class_list.txt (!!!!필독!!!! class 파일 필요)"
