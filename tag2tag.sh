@@ -69,7 +69,8 @@ today_date="$(date +%Y)$(date +%m)$(date +%d)"
 branch_nm="$(git symbolic-ref --short HEAD)"
 # 태그 to 태그
 previous_tag_name="$(git describe --tags --abbrev=0 $(git rev-list --tags="${branch_nm}*" --skip=1 --max-count=1))"
-previous_tag="$(git rev-list --tags="${branch_nm}*" --skip=1 --max-count=1)"
+previous_tag="$(git describe --tags --abbrev=0 $(git rev-list --tags="${branch_nm}*" --skip=1 --max-count=1))"
+#previous_tag="$(git rev-list --tags="${branch_nm}*" --skip=1 --max-count=1)"
 
 ######################
 # 디렉터리 생성
@@ -158,8 +159,8 @@ current_tag_name="$(git describe --tags --abbrev=0 $(git rev-list --tags="${bran
 current_tag="$(git rev-list --tags="${branch_nm}*" --skip=0 --max-count=1)"
 #name="[${previous_tag}]To[${current_tag}]"
 
-	echo "범위 : ${previous_tag} ~ ${current_tag}"
-	recordLog "* 태그 범위 : ${previous_tag} ~ ${current_tag}"
+	echo "범위 : ${previous_tag_name} ~ ${current_tag_name}"
+	recordLog "* 태그 범위 : ${previous_tag_name} ~ ${current_tag_name}"
 
 ###########
 # 파일 생성
@@ -168,7 +169,7 @@ echo "파일 생성 중..."
 recordLog "--------------------------------------------------------------------------------------------------"
 recordLog "* jovt_${project} 브랜치명: ${branch_nm}"
 recordLog "* 생성 파일"
-git archive -o V:/.patch/"${dir}"/htdocs_Update_${name}.zip HEAD $(git diff --diff-filter=AMR --name-only ${previous_tag} -- ':!*etc/*')
+git archive -o V:/.patch/"${dir}"/htdocs_Update_${name}.zip HEAD $(git diff --diff-filter=AMR --name-only ${previous_tag}..${current_tag} -- ':!*etc/*')
 
 recordLog "- htdocs_Update_${name}.zip"
 echo "파일 생성 완료..."
@@ -177,15 +178,15 @@ echo "파일 생성 완료..."
 # 업데이트 리스트 생성
 ######################
 echo "리스트 생성 중..."
-(git diff --diff-filter=AMR --name-only ${previous_tag} -- ':!*etc/*') > V:/.patch/"${dir}"/htdocs_Update_list.txt
+(git diff --diff-filter=AMR --name-only ${previous_tag}..${current_tag} -- ':!*etc/*') > V:/.patch/"${dir}"/htdocs_Update_list.txt
 recordLog "- htdocs_Update_list.txt"
 
 ##########################
 # JAVA 업데이트 리스트 생성
 ##########################
-if [ -n "$(git diff --diff-filter=AMR --name-only ${previous_tag} -- ':!*etc/*' '*.java')" ]; then
-	(git diff --diff-filter=AMR --name-only ${previous_tag} -- ':!*etc/*' '*.java') | sed -e "s,htdocs,${project_path}\/htdocs,g" | sed -e "s/\//\\\/g" | sed -e "s/java/class/g" | sed -e "s/src/classes/g" > V:/.patch/"${dir}"/htdocs_Update_class_list.txt
-	(git diff --diff-filter=AMR --name-only ${previous_tag} -- ':!*etc/*' '*.java') | sed -e "s/java/class/g" | sed -e "s/src/classes/g" > V:/.patch/"${dir}"/htdocs_Update_class_list_for_git.txt
+if [ -n "$(git diff --diff-filter=AMR --name-only ${previous_tag}..${current_tag} -- ':!*etc/*' '*.java')" ]; then
+	(git diff --diff-filter=AMR --name-only ${previous_tag}..${current_tag} -- ':!*etc/*' '*.java') | sed -e "s,htdocs,${project_path}\/htdocs,g" | sed -e "s/\//\\\/g" | sed -e "s/java/class/g" | sed -e "s/src/classes/g" > V:/.patch/"${dir}"/htdocs_Update_class_list.txt
+	(git diff --diff-filter=AMR --name-only ${previous_tag}..${current_tag} -- ':!*etc/*' '*.java') | sed -e "s/java/class/g" | sed -e "s/src/classes/g" > V:/.patch/"${dir}"/htdocs_Update_class_list_for_git.txt
 	recordLog "- htdocs_Update_class_list.txt (!!!!필독!!!! class 파일 필요)"
 fi
 recordLog "- readMe.txt"
