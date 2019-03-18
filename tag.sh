@@ -15,7 +15,7 @@ function question(){
 condition="N"
 while [ "${condition}" = "N" ] || [ "${condition}" = "n" ]
 do
-	question "Q. 프로젝트 명을 입력하세요. ex)kinfa"
+	question "Q. 프로젝트 명을 입력하세요. ex)hdmf"
 	read project
 
 	echo ""
@@ -68,11 +68,7 @@ cd ${project_path}
 today_date="$(date +%Y)$(date +%m)$(date +%d)"
 branch_nm="$(git symbolic-ref --short HEAD)"
 #branch_nm="농협"
-# 태그 to 태그
-previous_tag_name="$(git describe --tags --abbrev=0 $(git rev-list --tags="${branch_nm}*" --skip=1 --max-count=1))"
-previous_tag="$(git describe --tags --abbrev=0 $(git rev-list --tags="${branch_nm}*" --skip=1 --max-count=1))"
-#previous_tag="$(git rev-list --tags="${branch_nm}*" --skip=1 --max-count=1)"
-
+previous_tag="$(git describe --match "${branch_nm}*" --abbrev=0 --tags)"
 ######################
 # 디렉터리 생성
 ######################
@@ -114,20 +110,14 @@ function outputLog(){
 	# 압축된 파일 풀기
 	##########################
 	cd V:/.patch/"${dir}"/
-	if [ -e "2.htdocs_Update_class_list.txt" ]; then
+		if [ -e "2.htdocs_Update_class_list.txt" ]; then
 		unzip htdocs_Update_${name}.zip -d htdocs_Update_${name}
 		rm -R -f htdocs_Update_${name}.zip
 	fi
 
-
-
 	start .
 	start readMe.txt
 }
-
-###############################
-# name: 범위를 나타내는 이름 값
-###############################
 name="${branch_nm}_${today_date}_패치"
 recordLog "========================$(date '+%Y-%m-%d %H:%M:%S')========================"
 #recordLog "!!!!필독!!!!"
@@ -148,24 +138,32 @@ if [ -z $(git tag -l *${branch_nm}*) ]; then # TODO: 현재 브랜치에서의 t
 fi
 if [ -z "${previous_tag}" ]; then
 	recordLog "!!!!에러!!!!"
-	recordLog "2개 이상의 태그가 필요합니다."
+	recordLog "이전 태그가 존재하지 않습니다."
+	recordLog "'${branch_nm}_초기셋팅' 태그를 생성해 주십시오."
+	recordLog " "
+
+	outputLog
+	exit
+fi
+###############################지울곳
+# last_commit: 최종 커밋
+# ex) last commit: 현대해상_20190214_패치-6-g32e9253b7
+# ex) previous_tag: 현대해상_20190214_패치
+###############################
+last_commit="$(git describe --tags HEAD)"
+
+if [ "${previous_tag}" = "${last_commit}" ]; then
+	recordLog "!!!!에러!!!!"
+	recordLog "마지막 태그 이후 커밋된 이력이 없습니다."
+	recordLog "최종 커밋: ${last_commit}"
 	recordLog " "
 
 	outputLog
 	exit
 fi
 
-
-##################################
-# current_tag: 최종 태그
-# current_tag_name: 최종 태그 이름
-# name: 범위를 나타내는 이름 값
-##################################
-current_tag="$(git rev-list --tags="${branch_nm}*" --skip=0 --max-count=1)"
-current_tag_name="$(git describe --tags --abbrev=0 $(git rev-list --tags="${branch_nm}*" --skip=0 --max-count=1))"
-
-echo "범위 : ${previous_tag_name} ~ ${current_tag_name}"
-recordLog "* 태그 범위 : ${previous_tag_name} ~ ${current_tag_name}"
+	echo "범위 : ${previous_tag} ~ 최종 커밋"
+	recordLog "* 패치 범위 : ${previous_tag} ~ 최종 커밋"
 
 ###########
 # 파일 생성
@@ -174,7 +172,7 @@ echo "파일 생성 중..."
 recordLog "--------------------------------------------------------------------------------------------------"
 recordLog "* jovt_${project} 브랜치명: ${branch_nm}"
 recordLog "* 생성 파일"
-git archive -o V:/.patch/"${dir}"/htdocs_Update_${name}.zip HEAD $(git diff --diff-filter=AMR --name-only ${previous_tag}..${current_tag} -- ':!*etc/*' ':!.gitignore')
+git archive -o V:/.patch/"${dir}"/htdocs_Update_${name}.zip HEAD $(git diff --diff-filter=AMR --name-only ${previous_tag} -- ':!*etc/*' ':!.gitignore')
 
 recordLog "- htdocs_Update_${name}"
 echo "파일 생성 완료..."
@@ -183,31 +181,27 @@ echo "파일 생성 완료..."
 # 업데이트 리스트 생성
 ######################
 echo "리스트 생성 중..."
-(git diff --diff-filter=AMR --name-only ${previous_tag}..${current_tag} -- ':!*etc/*' ':!.gitignore') > V:/.patch/"${dir}"/1.htdocs_Update_list.txt
+(git diff --diff-filter=AMR --name-only ${previous_tag} -- ':!*etc/*' ':!.gitignore') > V:/.patch/"${dir}"/1.htdocs_Update_list.txt
 recordLog "1. htdocs_Update_list.txt"
-
 ##########################
 # JAVA 업데이트 리스트 생성
 ##########################
-if [ -n "$(git diff --diff-filter=AMR --name-only ${previous_tag}..${current_tag} -- ':!*etc/*' '*.java')" ]; then
-	(git diff --diff-filter=AMR --name-only ${previous_tag}..${current_tag} -- ':!*etc/*' '*.java') | sed -e "s,htdocs,${project_path}\/htdocs,g" | sed -e "s/\//\\\/g" | sed -e "s/java/class/g" | sed -e "s/src/classes/g" > V:/.patch/"${dir}"/2.htdocs_Update_class_list.txt
-	#(git diff --diff-filter=AMR --name-only ${previous_tag}..${current_tag} -- ':!*etc/*' '*.java') | sed -e "s/java/class/g" | sed -e "s/src/classes/g" > V:/.patch/"${dir}"/htdocs_Update_class_list_for_git.txt
+if [ -n "$(git diff --diff-filter=AMR --name-only ${previous_tag} -- ':!*etc/*' '*.java')" ]; then
+	(git diff --diff-filter=AMR --name-only ${previous_tag} -- ':!*etc/*' '*.java') | sed -e "s,htdocs,${project_path}\/htdocs,g" | sed -e "s/\//\\\/g" | sed -e "s/java/class/g" | sed -e "s/src/classes/g" > V:/.patch/"${dir}"/2.htdocs_Update_class_list.txt
+	#(git diff --diff-filter=AMR --name-only ${previous_tag} -- ':!*etc/*' '*.java') | sed -e "s/java/class/g" | sed -e "s/src/classes/g" > V:/.patch/"${dir}"/htdocs_Update_class_list_for_git.txt
 	recordLog "2. htdocs_Update_class_list.txt (!!!!필독!!!! class 파일 필요)"
 fi
 
 ############################
 # SCHEMA 업데이트 리스트 생성
 ############################
-if [ -n "$(git diff --diff-filter=AMR --name-only ${previous_tag}..${current_tag} -- '*etc/*')" ]; then
-	(git diff --diff-filter=AMR --name-only ${previous_tag}..${current_tag} -- '*etc/*') > V:/.patch/"${dir}"/3.schema_Update_list.txt
+if [ -n "$(git diff --diff-filter=AMR --name-only ${previous_tag} -- '*etc/*')" ]; then
+	(git diff --diff-filter=AMR --name-only ${previous_tag} -- '*etc/*') > V:/.patch/"${dir}"/3.schema_Update_list.txt
 	recordLog "3. schema_Update_list.txt"
 fi
-
 recordLog "- readMe.txt"
 recordLog "--------------------------------------------------------------------------------------------------"
 recordLog " "
 echo "리스트 생성 완료..."
 
 outputLog
-#cat log_$(date +%Y)$(date +%m)$(date +%d).txt
-#sleep 3s
